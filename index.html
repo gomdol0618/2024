@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>잔여시청시간 확인</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            font-size: 20px;
+            margin: 50px;
+            background-color: #e0f1fc;
+        }
+        
+        #currentHour, #currentMinute, #currentPercentage, #ampmSelector {
+            width: 60px; /* 입력창의 너비를 75px로 조정 */
+            height: 40px; /* 입력창의 높이를 40px로 조정 */
+            font-size: 20px; /* 입력창 안의 폰트 크기를 16px로 조정 */
+            text-align: center;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 20px;
+            color: #26312a;
+        }
+
+        #checkButton {
+            padding: 20px 20px; /* 내부 여백 설정 */
+            background-color: #4c80c5; /* 배경 색상 설정 */
+            color: white; /* 텍스트 색상 설정 */
+            border: none; /* 테두리 제거 */
+            border-radius: 5px; /* 모서리를 둥글게 만듭니다. */
+            cursor: pointer; /* 커서를 손가락 모양으로 변경하여 클릭 가능한 것으로 표시 */
+        }
+
+        #checkButton:hover {
+            background-color: #080808; /* 마우스 오버시 배경 색상 변경 (더 어둡게) */
+        }
+
+
+        #currentPercentageLabel {
+            margin-bottom: 10px; /* 현재 시청률 라벨의 하단 마진을 추가하여 조정 */
+        }
+
+        #mainTitle {
+            font-size: 42px; /* 상단 제목의 폰트 크기를 조정 */            
+        }
+
+        #subTitle {
+            font-size: 18px; /* 부제목의 폰트 크기를 조정 */
+            margin-bottom: -25px; /* 상단 제목의 하단 마진을 추가하여 조정 */
+        }
+    </style>
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@2.000.1/pretendard.css?version=1.1">
+</head>
+<body>
+    <div id="subTitle">2023 동계 1급 (정)교사 자격연수 공통과정 </div>
+    <h1 id="mainTitle">잔여 시청시간 확인</h1>
+
+    <label for="currentTime">현재 시각: </label>
+    <input type="number" id="currentHour" min="1" max="12" placeholder="시" required>
+    <input type="number" id="currentMinute" min="0" max="59" placeholder="분" required>
+    <select id="ampmSelector">
+        <option value="AM">오전</option>
+        <option value="PM">오후</option>
+    </select>
+
+    <br><br>
+
+    <label for="currentPercentage">현재 시청률 (%): </label>
+    <input type="number" id="currentPercentage" min="0" max="100" required>
+
+    <br><br>
+
+    <button onclick="checkCompletion()">확인</button>
+    
+    <br><br>
+
+    <div id="result"></div>
+
+    <script>
+        function checkCompletion() {
+            const totalDuration = 105; // 총 교육 시간 (분)
+            const requiredMinWatchTime = 84; // 각 교시별 최소 시청 시간 (분)
+
+            const currentHour = parseInt(document.getElementById("currentHour").value);
+            const currentMinute = parseInt(document.getElementById("currentMinute").value);
+            const ampm = document.getElementById("ampmSelector").value;
+            const currentPercentage = parseInt(document.getElementById("currentPercentage").value);
+
+            // 12시간제를 24시간제로 변환
+            const hour24 = (ampm === "PM" && currentHour !== 12) ? currentHour + 12 : currentHour;
+
+            // 현재 시간을 분으로 계산
+            const currentTimeInMinutes = hour24 * 60 + currentMinute;
+
+            // 각 교시의 시작 시간과 종료 시간
+            const classStartTimes = [9 * 60, 11 * 60, 14 * 60];
+            const classEndTimes = [10 * 60 + 45, 12 * 60 + 45, 15 * 60 + 45];
+
+            let classIndex = -1;
+
+            // 현재 시간이 어떤 교시에 속하는지 확인
+            for (let i = 0; i < classStartTimes.length; i++) {
+                if (currentTimeInMinutes >= classStartTimes[i] && currentTimeInMinutes <= classEndTimes[i]) {
+                    classIndex = i + 1;
+                    break;
+                }
+            }
+
+            // 이미 시청한 시간
+            const alreadyWatchedTime = (totalDuration * currentPercentage) / 100;
+
+            // 남은 이수 시간
+            const remainingWatchTime = Math.ceil(requiredMinWatchTime - alreadyWatchedTime);
+
+            // 남은 강의시간이 이보다 짧으면 메시지 추가
+            const remainingClassTime = classEndTimes[classIndex - 1] - currentTimeInMinutes;
+            const message = remainingWatchTime > remainingClassTime ?
+                `<br>남은 강의시간이 이보다 짧기때문에 해당 과목 이수가 어렵습니다.` : "";
+
+            // 결과 표시
+            const resultMessage = classIndex !== -1 ?
+                `현재 ${classIndex}교시이며, 앞으로 ${remainingWatchTime}분 더 시청해야 해당 과목 이수가 가능합니다.${message}` :
+                "현재 강의 진행 중이 아닙니다.";
+            
+            document.getElementById("result").innerHTML = resultMessage;
+        }
+    </script>
+</body>
+</html>
